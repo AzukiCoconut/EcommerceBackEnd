@@ -1,5 +1,5 @@
 const router = require('express').Router();
-const { Product, ProductTag } = require('../../models');
+const { Product, ProductTag, Category, Tag } = require('../../models');
 
 router.get('/', async (req, res) => {
     try {
@@ -14,7 +14,7 @@ router.get('/', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
     try {
-        const productData = await Product.findByPk({
+        const productData = await Product.findByPk(req.params.id, {
             include: [{model: Category}, { model: Tag, through: ProductTag, as: 'product_tags'}],
         });
         if (!productData) {
@@ -39,9 +39,8 @@ router.post('/', async (req, res) => {
                 };
             });
             const productTagIds = await ProductTag.bulkCreate(productTagIdArr);
-            res.status(200).json(productTagIds);
+            res.status(200).json(product);
         }
-        res.status(200).json(product);
     } catch (err) {
         res.status(400).json(err);
     }
@@ -49,14 +48,16 @@ router.post('/', async (req, res) => {
 
 router.put('/:id', async (req, res) => {
     try {
-        const product = await Product.update(req.body, {
-            where: {
-                id: req.params.id,
-            },
-        });
-        if (!product[0]) {
-            res.status(404).json({message: 'No product with this id!'});
-            return;
+        if (req.body.product_name || req.body.price || req.body.stock || req.body.category_id) {
+            const product = await Product.update(req.body, {
+                where: {
+                    id: req.params.id,
+                },
+            });
+            if (!product[0]) {
+                res.status(404).json({message: 'No product with this id!'});
+                return;
+            }
         }
         if (req.body.tagIds && req.body.tagIds.length) {
             const productTags = await ProductTag.findAll({
@@ -70,16 +71,15 @@ router.put('/:id', async (req, res) => {
                     tag_id,
                 };
             });
-
             const productTagsToRemove = productTags.filter(({tag_id}) => !req.body.tagIds.includes(tag_id))
             .map(({id}) => id);
-
-            const deleteTags = await ProductTag.destroy({where: {id: productTagsToRemove}});
-            const createTags = await ProductTag.bulkCreate(newProductTags);
-
-            if (deleteTags && createTags){
-                res.status(200).json(createTags);
-            }
+            let deleteTags;
+            let createTags;    
+            deleteTags = await ProductTag.destroy({where: {id: productTagsToRemove}});
+            createTags = await ProductTag.bulkCreate(newProductTags);
+            
+            res.status(200).json({message: "Update complete"});
+            
         }
     } catch (err) {
         res.status(500).json(err);
