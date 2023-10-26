@@ -1,6 +1,7 @@
 const router = require('express').Router();
 const {Tag, Product, ProductTag} = require('../../models');
 
+// READ all tags
 router.get('/', async (req, res) => {
     try {
         const tagData = await Tag.findAll();
@@ -10,6 +11,7 @@ router.get('/', async (req, res) => {
     }
 });
 
+// READ tag by specific id
 router.get('/:id', async (req, res) => {
     try {
         const tagData = await Tag.findByPk(req.params.id);
@@ -25,6 +27,7 @@ router.get('/:id', async (req, res) => {
     }
 });
 
+// CREATE tag
 router.post('/', async (req, res) => {
     try {
         const tagData = await Tag.create(req.body);
@@ -34,6 +37,7 @@ router.post('/', async (req, res) => {
     }
 });
 
+// UPDATE Tag
 router.put('/:id', async (req, res) => {
     try {
         const tagData = await Tag.update(req.body, {
@@ -51,6 +55,7 @@ router.put('/:id', async (req, res) => {
     }
 });
 
+// DELETE Tag
 router.delete('/:id', async (req, res) =>{
     try {
         const tagData = await Tag.destroy({
